@@ -11,7 +11,14 @@ from collections import defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent
 PUB = ROOT / "public"
-SITE_URL = "https://verifiedevinstallers.com"  # single place to change the domain
+import os
+
+# Priority: explicit SITE_URL env -> Render's own URL (set automatically at build
+# time on Render) -> local fallback. When a custom domain is added later, set
+# SITE_URL in the Render dashboard and redeploy.
+SITE_URL = (os.environ.get("SITE_URL")
+            or os.environ.get("RENDER_EXTERNAL_URL")
+            or "https://verified-ev-installers.onrender.com").rstrip("/")
 SITE_NAME = "Verified EV Installers"
 
 
