@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: verified-ev-installers
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python build.py
+    startCommand: gunicorn server:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      # Optional lead email forwarding - set these in the dashboard when ready:
+      # LEAD_EMAIL_TO, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
