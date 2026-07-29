@@ -591,7 +591,9 @@ def main():
     if PUB.exists():
         shutil.rmtree(PUB)
     PUB.mkdir()
-    shutil.copy(ROOT / "static" / "style.css", PUB / "style.css")
+    # Write rather than shutil.copy: a copied file did not survive Render's
+    # static-bundle upload, while every write()-generated file did.
+    write("style.css", (ROOT / "static" / "style.css").read_text())
     rows = load()
     by_state = defaultdict(list)
     for r in rows:
