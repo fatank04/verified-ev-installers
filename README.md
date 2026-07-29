@@ -11,20 +11,33 @@ python3 build.py
 .venv/bin/python server.py   # http://localhost:8018
 ```
 
-## Deploy to Render
+## Deploy to Render (static site)
 
-1. Push this folder to a GitHub repo.
-2. Render dashboard → New → Blueprint → pick the repo. `render.yaml` does the rest
-   (build = `pip install + python build.py`, start = `gunicorn server:app`, free plan).
-3. Add the custom domain in Render settings once registered.
+Deployed as a Render **static site**, not a web service. Static sites are free and do
+not consume the workspace's free instance hours (web services do - that limit is what
+blocked the original blueprint).
+
+1. Render dashboard → New → Static Site → pick this repo.
+2. Build command `python3 build.py`, publish directory `public`.
+3. Set `FORM_ENDPOINT` (below) under Environment.
 
 ## Leads
 
-Every submission is written to Render logs (`LEAD {...}` lines) and `leads.jsonl`.
-To also get email, set env vars in the Render dashboard:
-`LEAD_EMAIL_TO`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
-(a Google Workspace app password works). Note: `leads.jsonl` is ephemeral on the free
-plan - Render logs are the durable record until email is configured.
+The quote/report forms POST directly to whatever `FORM_ENDPOINT` is set to at build
+time - no backend, nothing to keep running. FormSubmit needs no account:
+
+```
+FORM_ENDPOINT=https://formsubmit.co/ajax/you@example.com
+```
+
+Confirm the address once via the link in FormSubmit's first email, then submissions
+arrive as email. Formspree, Web3Forms, or a Cloudflare Worker work the same way.
+
+If `FORM_ENDPOINT` is unset, forms are replaced by the contractor's own phone/website
+rather than silently dropping submissions.
+
+`server.py` still exists for local preview and keeps the old `/api/lead` logging path,
+but is not used by the Render static deploy.
 
 ## Staying current
 

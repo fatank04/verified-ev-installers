@@ -1,12 +1,16 @@
 services:
+  # Static site: free on Render and exempt from the workspace's free *instance*
+  # hours, which web services consume. build.py generates every page into public/.
+  # No routes/rewrites - Render serves /installers/ohio/ from
+  # public/installers/ohio/index.html directly, and a catch-all rewrite would
+  # break every subpage.
   - type: web
     name: verified-ev-installers
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt && python build.py
-    startCommand: gunicorn server:app
+    runtime: static
+    buildCommand: python3 build.py
+    staticPublishPath: ./public
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.4
-      # Optional lead email forwarding - set these in the dashboard when ready:
-      # LEAD_EMAIL_TO, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+      # Where quote requests POST. Set this in the Render dashboard (not here -
+      # this repo is public). Example: https://formsubmit.co/ajax/you@example.com
+      - key: FORM_ENDPOINT
+        sync: false

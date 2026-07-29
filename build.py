@@ -35,6 +35,13 @@ def _checked_label():
 
 CHECKED = _checked_label()
 
+# Where lead/quote requests are POSTed. Set as a build-time env var in Render so
+# the address never lands in this public repo. FormSubmit needs no account:
+#   FORM_ENDPOINT=https://formsubmit.co/ajax/you@example.com
+# Any endpoint accepting a POST of form fields works (Formspree, Web3Forms, a Worker).
+# When unset, forms fall back to showing the contractor's own contact details.
+FORM_ENDPOINT = os.environ.get("FORM_ENDPOINT", "").strip()
+
 _STATES = [
     ("alabama", "Alabama", "AL"), ("alaska", "Alaska", "AK"), ("arizona", "Arizona", "AZ"),
     ("arkansas", "Arkansas", "AR"), ("california", "California", "CA"),
@@ -167,11 +174,20 @@ def card(r, state_slug):
 </article>"""
 
 
-def lead_form(subject, note=""):
-    return f"""<form class="lead" id="quote" method="post" action="/api/lead" data-subject="{esc(subject)}">
+def lead_form(subject, note="", fallback=""):
+    if not FORM_ENDPOINT:
+        # No form backend configured: never show a form that silently drops leads.
+        return f"""<section class="lead" id="quote">
+  <h2>Request a quote</h2>
+  <p>{fallback or 'Contact the contractor directly using the details on this page.'}</p>
+  <p class="fine">Online quote requests are being switched on shortly.</p>
+</section>"""
+    return f"""<form class="lead" id="quote" method="post" action="{esc(FORM_ENDPOINT)}" data-subject="{esc(subject)}">
   <h2>Request a quote</h2>
   {f'<p class="form-note">{esc(note)}</p>' if note else ''}
   <input type="hidden" name="subject" value="{esc(subject)}">
+  <input type="hidden" name="_subject" value="Lead: {esc(subject)}">
+  <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
   <label>Name <input name="name" required></label>
   <label>Email <input name="email" type="email" required></label>
   <label>Phone <input name="phone"></label>
@@ -197,7 +213,9 @@ document.querySelectorAll('form.lead').forEach(f => f.addEventListener('submit',
   e.preventDefault();
   const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
   try {{
-    const res = await fetch('/api/lead', {{method:'POST', body:new FormData(f)}});
+    const res = await fetch(f.action, {{
+      method: 'POST', body: new FormData(f), headers: {{'Accept': 'application/json'}}
+    }});
     if (!res.ok) throw new Error();
     f.querySelectorAll('label,button').forEach(el => el.hidden = true);
     f.querySelector('.sent').hidden = false;
@@ -409,7 +427,12 @@ def build_profile(r):
     Out of date or closed? <a href="#quote" onclick="document.querySelector('[name=project_type]').value='Listing correction or closure report'">Report a change</a>.</p>
   </div>
   <aside class="profile-side">
-    {lead_form(f"{r['name']} ({STATE_ABBR[state]})")}
+    {lead_form(
+        f"{r['name']} ({STATE_ABBR[state]})",
+        fallback=(f'Call <a href="tel:{phone_digits}">{esc(fmt_phone(r["phone"]))}</a>'
+                  if r["phone"] else "") +
+                 (f' or visit their <a href="{esc(r["website"])}" rel="nofollow noopener" target="_blank">website</a>.'
+                  if r["website"] else "."))}
   </aside>
 </div>
 <script type="application/ld+json">{json.dumps({k: v for k, v in ld.items() if v})}</script>"""
