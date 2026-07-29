@@ -42,6 +42,23 @@ CHECKED = _checked_label()
 # When unset, forms fall back to showing the contractor's own contact details.
 FORM_ENDPOINT = os.environ.get("FORM_ENDPOINT", "").strip()
 
+# Analytics. Set ONE of these in Render, or neither (site runs fine with no tracking).
+#   PLAUSIBLE_DOMAIN=verifiedevinstallers.com   -> privacy-friendly, no cookie banner needed
+#   GA_ID=G-XXXXXXXXXX                          -> Google Analytics 4
+PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN", "").strip()
+GA_ID = os.environ.get("GA_ID", "").strip()
+
+
+def analytics_snippet():
+    if PLAUSIBLE_DOMAIN:
+        return (f'<script defer data-domain="{esc(PLAUSIBLE_DOMAIN)}" '
+                f'src="https://plausible.io/js/script.outbound-links.js"></script>')
+    if GA_ID:
+        return (f'<script async src="https://www.googletagmanager.com/gtag/js?id={esc(GA_ID)}"></script>'
+                f'<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}'
+                f'gtag("js",new Date());gtag("config","{esc(GA_ID)}");</script>')
+    return ""
+
 _STATES = [
     ("alabama", "Alabama", "AL"), ("alaska", "Alaska", "AK"), ("arizona", "Arizona", "AZ"),
     ("arkansas", "Arkansas", "AR"), ("california", "California", "CA"),
@@ -110,6 +127,7 @@ def page(title, desc, body, canonical, extra_head=""):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
+{analytics_snippet()}
 {extra_head}
 </head>
 <body>

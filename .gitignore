@@ -3,3 +3,4 @@ public/
 leads.jsonl
 __pycache__/
 *.pyc
+data/outreach.csv
