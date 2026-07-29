@@ -148,6 +148,17 @@ main { max-width: 1060px; margin: 0 auto; padding: 0 20px 60px; }
 .fine { font-size: 0.8rem; color: var(--muted); }
 .sent { font-weight: 700; color: #1e7d32; }
 
+/* pricing */
+.pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin: 26px 0; }
+.tier { border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; }
+.tier.featured { border: 2px solid var(--accent); }
+.tier h2 { margin: 0 0 4px; font-size: 1.2rem; }
+.tier .price { font-family: "Barlow", sans-serif; font-size: 2rem; font-weight: 700; margin: 0 0 12px; line-height: 1.1; }
+.tier .price span { font-size: 0.95rem; font-weight: 600; color: var(--muted); }
+.tier ul { padding-left: 18px; margin: 0 0 18px; font-size: 0.93rem; }
+.tier li { margin-bottom: 7px; }
+.tier .btn { margin-top: auto; align-self: flex-start; }
+
 /* faq + guides */
 .faq details { border-bottom: 1px solid var(--line); padding: 10px 0; }
 .faq summary { font-weight: 600; cursor: pointer; }

@@ -120,6 +120,7 @@ def page(title, desc, body, canonical, extra_head=""):
     <a href="/installers/">Browse states</a>
     <a href="/commercial/">Commercial</a>
     <a href="/guides/">Guides</a>
+    <a href="/pricing/">Pricing</a>
     <a class="cta" href="/for-installers/">For installers</a>
   </nav>
 </header>
@@ -136,6 +137,9 @@ def page(title, desc, body, canonical, extra_head=""):
     <a href="/guides/methodology/">How we verify</a>
     <a href="/guides/evitp-certification/">What is EVITP?</a>
     <a href="/for-installers/">Claim your listing</a>
+    <a href="/pricing/">Pricing</a>
+    <a href="/terms/">Terms</a>
+    <a href="/privacy/">Privacy</a>
   </div>
 </footer>
 </body>
@@ -174,19 +178,67 @@ def card(r, state_slug):
 </article>"""
 
 
-def lead_form(subject, note="", fallback=""):
+COMMERCIAL_FIELDS = """
+  <label>Site type
+    <select name="site_type">
+      <option>Workplace / office</option>
+      <option>Multifamily / apartment / HOA</option>
+      <option>Retail / hospitality</option>
+      <option>Fleet depot</option>
+      <option>Public / municipal</option>
+      <option>Other</option>
+    </select>
+  </label>
+  <label>Ports needed
+    <select name="ports">
+      <option>1-2</option><option>3-6</option><option>7-20</option><option>20+</option>
+      <option>Not sure yet</option>
+    </select>
+  </label>
+  <label>Timeline
+    <select name="timeline">
+      <option>Ready now</option><option>1-3 months</option>
+      <option>3-6 months</option><option>Just researching</option>
+    </select>
+  </label>
+  <label>Your role
+    <select name="role">
+      <option>Property owner</option><option>Property manager</option>
+      <option>Facilities / operations</option><option>Developer / GC</option>
+      <option>Consultant</option><option>Other</option>
+    </select>
+  </label>"""
+
+INSTALLER_FIELDS = """
+  <label>Company <input name="company" required></label>
+  <label>States you serve <input name="service_states" placeholder="e.g. PA, OH, WV" required></label>
+  <label>Work you take on
+    <select name="capability">
+      <option>Residential and commercial</option>
+      <option>Commercial only</option>
+      <option>Residential only</option>
+      <option>DC fast charging / NEVI</option>
+    </select>
+  </label>"""
+
+
+def lead_form(subject, note="", fallback="", extra_fields="", cta="Send request",
+              heading="Request a quote", fine=None):
     if not FORM_ENDPOINT:
         # No form backend configured: never show a form that silently drops leads.
         return f"""<section class="lead" id="quote">
-  <h2>Request a quote</h2>
+  <h2>{esc(heading)}</h2>
   <p>{fallback or 'Contact the contractor directly using the details on this page.'}</p>
   <p class="fine">Online quote requests are being switched on shortly.</p>
 </section>"""
     return f"""<form class="lead" id="quote" method="post" action="{esc(FORM_ENDPOINT)}" data-subject="{esc(subject)}">
-  <h2>Request a quote</h2>
+  <h2>{esc(heading)}</h2>
   {f'<p class="form-note">{esc(note)}</p>' if note else ''}
   <input type="hidden" name="subject" value="{esc(subject)}">
   <input type="hidden" name="_subject" value="Lead: {esc(subject)}">
+  <input type="hidden" name="lead_id" value="">
+  <input type="hidden" name="source_url" value="">
+  <input type="hidden" name="submitted_at" value="">
   <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
   <label>Name <input name="name" required></label>
   <label>Email <input name="email" type="email" required></label>
@@ -203,24 +255,36 @@ def lead_form(subject, note="", fallback=""):
       <option>Listing correction or closure report</option>
     </select>
   </label>
+{extra_fields}
   <label>Details <textarea name="details" rows="4"></textarea></label>
-  <button class="btn" type="submit">Send request</button>
-  <p class="fine">We route your request to matching EVITP-approved contractors. No spam, no account needed.</p>
-  <p class="sent" aria-live="polite" hidden>Request sent. A contractor will reach out shortly.</p>
+  <button class="btn" type="submit">{esc(cta)}</button>
+  <p class="fine">{fine or 'We route your request to matching EVITP-approved contractors. No spam, no account needed.'}</p>
+  <p class="sent" aria-live="polite" hidden>Sent. We'll be in touch shortly.</p>
 </form>
 <script>
-document.querySelectorAll('form.lead').forEach(f => f.addEventListener('submit', async e => {{
-  e.preventDefault();
-  const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Sending…';
-  try {{
-    const res = await fetch(f.action, {{
-      method: 'POST', body: new FormData(f), headers: {{'Accept': 'application/json'}}
-    }});
-    if (!res.ok) throw new Error();
-    f.querySelectorAll('label,button').forEach(el => el.hidden = true);
-    f.querySelector('.sent').hidden = false;
-  }} catch {{ btn.disabled = false; btn.textContent = 'Send request'; alert('Could not send - please try again.'); }}
-}}));
+document.querySelectorAll('form.lead').forEach(f => {{
+  // Stamp attribution before submit so every lead is traceable to a page and time.
+  const id = f.querySelector('[name=lead_id]');
+  if (id && !id.value) {{
+    id.value = 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    f.querySelector('[name=source_url]').value = location.pathname;
+  }}
+  f.addEventListener('submit', async e => {{
+    e.preventDefault();
+    f.querySelector('[name=submitted_at]').value = new Date().toISOString();
+    const btn = f.querySelector('button');
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {{
+      const res = await fetch(f.action, {{
+        method: 'POST', body: new FormData(f), headers: {{'Accept': 'application/json'}}
+      }});
+      if (!res.ok) throw new Error();
+      f.querySelectorAll('label,button').forEach(el => el.hidden = true);
+      f.querySelector('.sent').hidden = false;
+    }} catch {{ btn.disabled = false; btn.textContent = label; alert('Could not send - please try again.'); }}
+  }});
+}});
 </script>"""
 
 
@@ -458,7 +522,11 @@ contractor list.</p>
   <div><h3>DC fast charging</h3><p>For DCFC and fleet projects, ask contractors about utility
   coordination and switchgear experience - and confirm EVITP certification of the crew.</p></div>
 </div>
-{lead_form("Commercial project", "Commercial requests are routed with priority.")}
+{lead_form("Commercial project",
+           "Tell us the project once. We route it to EVITP-approved contractors in your state.",
+           extra_fields=COMMERCIAL_FIELDS,
+           cta="Get matched quotes",
+           fine="Free for property owners and managers. We never post your details publicly.")}
 <h2>Or browse contractors by state</h2>
 <div class="chips">{links}</div>"""
     write("commercial/index.html", page(
@@ -566,19 +634,125 @@ def build_guides():
         f'<h1>Guides</h1><ul class="guide-list">{lis}</ul>', "/guides/"))
 
 
-def build_for_installers():
+def build_for_installers(total):
     body = f"""
-<h1>For Installers: Claim Your Listing</h1>
-<p>If your company appears in this directory, the listing was built from the public EVITP
-contractor list. Claiming is free and lets you correct details, add service areas, and receive
-quote requests directly.</p>
-{lead_form("Installer claim request", "Use your company email so we can match you to the listing.")}
+<h1>For Installers: Get Leads in Your Area</h1>
+<p>This directory lists {total:,} contractors employing EVITP-certified electricians, sourced
+from the public EVITP lists. Listings are free and cannot be bought.</p>
+<div class="cols">
+  <div><h3>1. Claim your listing</h3><p>Free. Correct your details, set your real service area,
+  flag whether you take commercial work.</p></div>
+  <div><h3>2. Join the lead waitlist</h3><p>Free. When a property owner in your metro requests
+  quotes, we route it to waitlist contractors first - and the first leads go out at no charge
+  so you can judge the quality yourself.</p></div>
+  <div><h3>3. Pay only if it works</h3><p>Per-lead pricing starts after you have received leads
+  from us. <a href="/pricing/">See pricing</a>. No contracts, no placement fees, ever.</p></div>
+</div>
+{lead_form("Installer waitlist / claim",
+           "Use your company email so we can match you to your listing.",
+           extra_fields=INSTALLER_FIELDS,
+           cta="Join the lead waitlist",
+           fine="Free. We contact you when there is a project in your area - not before.")}
 <p class="fine">Not listed but EVITP-approved? Send a note above - we re-check the source lists
 on every crawl.</p>"""
     write("for-installers/index.html", page(
-        "Claim Your Listing - For EV Charger Installers",
-        "EVITP-approved contractors: claim your free listing, correct details, and receive quote requests.",
+        "Get EV Charger Leads - For EVITP-Approved Installers",
+        "EVITP-approved contractors: claim your free listing and join the lead waitlist. First leads are free; per-lead pricing only after they work.",
         body, "/for-installers/"))
+
+
+def build_pricing():
+    body = """
+<h1>Pricing</h1>
+<p class="stats-line">Listings are free and always will be. You pay for work, not for placement.</p>
+<div class="pricing">
+  <div class="tier">
+    <h2>Listing</h2><p class="price">Free</p>
+    <ul>
+      <li>Every EVITP-approved contractor is listed automatically</li>
+      <li>Claim it to correct details and set your service area</li>
+      <li>Placement cannot be purchased at any tier</li>
+    </ul>
+    <a class="btn" href="/for-installers/">Claim your listing</a>
+  </div>
+  <div class="tier featured">
+    <h2>Per lead</h2><p class="price">$45 <span>residential</span><br>$250 <span>commercial</span></p>
+    <ul>
+      <li><strong>Exclusive</strong> - not resold to 4 other contractors</li>
+      <li>Commercial leads are qualified: site type, port count, timeline, decision role</li>
+      <li>Your first leads are free so you can judge quality before paying</li>
+      <li>No contract. Pause any time.</li>
+    </ul>
+    <a class="btn" href="/for-installers/">Join the waitlist</a>
+  </div>
+  <div class="tier">
+    <h2>Verified</h2><p class="price">$79<span>/mo</span></p>
+    <ul>
+      <li>State license cross-checked and shown with its verification date</li>
+      <li>Priority routing on leads in your service area</li>
+      <li>Offered only to contractors who have already closed a lead from us</li>
+    </ul>
+    <p class="fine">Not yet open. Waitlist contractors get founding pricing.</p>
+  </div>
+</div>
+<h2>Why it is priced this way</h2>
+<p>Angi and Thumbtack charge $15-85 per lead and sell the same lead to four or five contractors.
+Ours are exclusive, which is worth more per lead and far more per booked job. Commercial pricing
+reflects the work: a multi-port Level 2 project runs $7,000-15,000 per port, and DC fast charging
+runs far higher.</p>
+<h2>What we will not do</h2>
+<ul>
+  <li>Sell ranking position. Order is by data, never by payment.</li>
+  <li>Resell one lead to five contractors.</li>
+  <li>Run display ads against listings.</li>
+  <li>Lock anyone into an annual contract.</li>
+</ul>"""
+    write("pricing/index.html", page(
+        "Pricing - Verified EV Installers",
+        "Free listings for every EVITP-approved contractor. Exclusive leads at $45 residential / $250 commercial. No placement fees, no contracts.",
+        body, "/pricing/"))
+
+
+LEGAL = {
+    "terms": ("Terms of Use", "Terms governing use of the Verified EV Installers directory.", """
+<h1>Terms of Use</h1>
+<p><strong>What this site is.</strong> Verified EV Installers is an independent directory of
+contractors that employ EVITP-certified electricians. We are not affiliated with, endorsed by,
+or acting on behalf of EVITP.</p>
+<p><strong>Listings.</strong> Listings are compiled from publicly published EVITP contractor
+lists. The "EVITP-Approved" badge means the contractor appeared on that public list on the
+verification date shown - it is not a review, a rating, a warranty, or a recommendation.</p>
+<p><strong>No guarantee of work.</strong> We do not perform electrical work, do not employ
+contractors, and are not a party to any agreement between you and a contractor. Verify
+licensing, insurance, and permits yourself before hiring.</p>
+<p><strong>Quote requests.</strong> Submitting a request means we may share the details you
+provide with contractors matched to your project. We do not publish your details.</p>
+<p><strong>Accuracy.</strong> Data may be out of date between crawls. Report a correction from
+any listing page and we will address it on the next refresh.</p>
+<p><strong>Liability.</strong> The directory is provided as-is, without warranties. We are not
+liable for work performed by any listed contractor.</p>"""),
+    "privacy": ("Privacy Policy", "What data Verified EV Installers collects and how it is used.", """
+<h1>Privacy Policy</h1>
+<p><strong>What we collect.</strong> Only what you type into a quote or claim form: name,
+email, phone, ZIP, project details, plus the page you submitted from and a timestamp. No
+accounts, no logins.</p>
+<p><strong>Why.</strong> To route your request to matching contractors and to follow up about
+it. Nothing else.</p>
+<p><strong>Who sees it.</strong> Contractors we match to your project. We do not sell your
+personal data to data brokers or advertisers.</p>
+<p><strong>Contractor listing data.</strong> Business contact details shown in listings come
+from public EVITP contractor lists. Contractors can claim, correct, or request removal of a
+listing at any time from the report link on their page.</p>
+<p><strong>Cookies and tracking.</strong> The site sets no advertising cookies and runs no
+ad-network trackers.</p>
+<p><strong>Deletion.</strong> Ask and we delete your submission.</p>"""),
+}
+
+
+def build_legal():
+    for slug, (title, desc, content) in LEGAL.items():
+        body = f'<nav class="crumbs"><a href="/">Home</a> / {esc(title)}</nav><article class="guide">{content}</article>'
+        write(f"{slug}/index.html", page(title, desc, body, f"/{slug}/"))
 
 
 def build_sitemap(paths):
@@ -618,7 +792,10 @@ def main():
     build_commercial(by_state)
     build_guides()
     paths += [f"/guides/{s}/" for s in GUIDES]
-    build_for_installers()
+    build_for_installers(len(rows))
+    build_pricing()
+    build_legal()
+    paths += ["/pricing/"] + [f"/{s}/" for s in LEGAL]
     build_sitemap(sorted(set(paths)))
     n_pages = sum(1 for _ in PUB.rglob("index.html"))
     print(f"Built {n_pages} pages -> {PUB}")
