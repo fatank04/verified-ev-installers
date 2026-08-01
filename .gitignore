@@ -4,3 +4,4 @@ leads.jsonl
 __pycache__/
 *.pyc
 data/outreach.csv
+data/call_list.csv
