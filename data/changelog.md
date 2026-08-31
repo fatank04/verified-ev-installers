@@ -12,3 +12,8 @@
 ## 2026-08-24
 - Total: 2200 contractors
 - GUARD kept previous data for: arkansas, california, colorado, connecticut, delaware, florida, georgia, hawaii
+
+## 2026-08-31
+- Total: 2200 contractors
+- Added (1): Low Current Systems, LLC (california)
+- Removed - no longer on EVITP list (1): Genesis Electrical, Inc (california)
