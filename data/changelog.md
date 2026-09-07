@@ -17,3 +17,7 @@
 - Total: 2200 contractors
 - Added (1): Low Current Systems, LLC (california)
 - Removed - no longer on EVITP list (1): Genesis Electrical, Inc (california)
+
+## 2026-09-07
+- Total: 2201 contractors
+- Added (1): WAVSYS Solutions, LLC (illinois)
