@@ -21,3 +21,7 @@
 ## 2026-09-07
 - Total: 2201 contractors
 - Added (1): WAVSYS Solutions, LLC (illinois)
+
+## 2026-09-28
+- Total: 2203 contractors
+- Added (2): Mangieri Electric, Inc. (illinois); Sonoma County Electric (california)
