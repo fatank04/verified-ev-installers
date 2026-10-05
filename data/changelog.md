@@ -25,3 +25,7 @@
 ## 2026-09-28
 - Total: 2203 contractors
 - Added (2): Mangieri Electric, Inc. (illinois); Sonoma County Electric (california)
+
+## 2026-10-05
+- Total: 2204 contractors
+- Added (1): Resound Energy, LLC (washington)
