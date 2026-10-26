@@ -33,3 +33,7 @@
 ## 2026-10-19
 - Total: 2207 contractors
 - Added (3): A&M Electric (california); Ayoung Electric (pennsylvania); WJRJ Electrical (minnesota)
+
+## 2026-10-26
+- Total: 2208 contractors
+- Added (1): Eldridge Electric & Son, Inc. (california)
