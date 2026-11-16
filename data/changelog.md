@@ -41,3 +41,7 @@
 ## 2026-11-02
 - Total: 2209 contractors
 - Added (1): JP Electric, LLC (arizona)
+
+## 2026-11-16
+- Total: 2208 contractors
+- Removed - no longer on EVITP list (1): CSI Electrical Contractors, Inc. (california)
