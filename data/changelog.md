@@ -45,3 +45,7 @@
 ## 2026-11-16
 - Total: 2208 contractors
 - Removed - no longer on EVITP list (1): CSI Electrical Contractors, Inc. (california)
+
+## 2026-11-23
+- Total: 2207 contractors
+- Removed - no longer on EVITP list (1): Moran Electrical Contracting (illinois)
